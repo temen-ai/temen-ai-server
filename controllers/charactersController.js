@@ -12,7 +12,6 @@ class CharactersController {
         .order("created_at", { ascending: true });
 
       res.status(200).json({ data });
-
     } catch (err) {
       next(err);
     }
@@ -20,24 +19,25 @@ class CharactersController {
 
   static async postCharacters(req, res, next) {
     try {
-      const { name, description, prompt, model, pfp, messages_count } = req.query;
+      const { name, description, prompt, model, pfp, messages_count } =
+        req.query;
 
       const { data, error } = await supabase
-        .from("users")
+        .from("characters")
         .insert([
-            {
-                name: name, 
-                description: description, 
-                prompt: prompt, 
-                model: model, 
-                pfp: pfp, 
-                messages_count: messages_count
-            }
+          {
+            name: name,
+            description: description,
+            prompt: prompt,
+            model: model,
+            pfp: pfp,
+            messages_count: messages_count,
+          },
         ])
-        .select()
+        .select();
 
       res.status(200).json({ data });
-
+      d;
     } catch (err) {
       next(err);
     }

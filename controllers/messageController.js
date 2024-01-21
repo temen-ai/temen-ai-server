@@ -12,7 +12,6 @@ class MessageController {
         .order("created_at", { ascending: true });
 
       res.status(200).json({ data });
-
     } catch (err) {
       next(err);
     }
@@ -20,23 +19,23 @@ class MessageController {
 
   static async postListMessage(req, res, next) {
     try {
-      const { conversation_id, message, media_url, media_type, sent_by } = req.query;
+      const { conversation_id, message, media_url, media_type, sent_by } =
+        req.query;
 
       const { data, error } = await supabase
         .from("messages")
         .insert([
-            {
-                conversation_id: conversation_id, 
-                message: message,
-                media_url: media_url, 
-                media_type: media_type,  
-                sent_by: sent_by
-            }
+          {
+            conversation_id: conversation_id,
+            message: message,
+            media_url: media_url,
+            media_type: media_type,
+            sent_by: sent_by,
+          },
         ])
-        .select()
+        .select();
 
       res.status(200).json({ data });
-
     } catch (err) {
       next(err);
     }
