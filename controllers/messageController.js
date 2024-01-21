@@ -45,7 +45,7 @@ class MessageController {
         .from("messages")
         .select()
         .eq("character_id", character_id)
-        .eq("id", user_id)
+        .eq("user_id", user_id)
         .order("created_at", { ascending: true });
 
       res.status(200).json({ data });
