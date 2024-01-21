@@ -1,14 +1,33 @@
-import supabase from "../config/supabase.js";
+import { supabase } from "../config/supabase.js";
 
 class MessageController {
-  static async getListMessage(req, res, next) {
+  // static async getListMessage(req, res, next) {
+  //   try {
+  //     const user_id = req.user;
+
+  //     const { data, error } = await supabase
+  //       .from("messages")
+  //       .select()
+  //       .eq("id", user_id)
+  //       .order("created_at", { ascending: true });
+
+  //     res.status(200).json({ data });
+  //   } catch (err) {
+  //     next(err);
+  //   }
+  // }
+
+  static async getListMessageByConversation(req, res, next) {
     try {
-      const { conversation_id } = req.query;
+      // use destructuring to make it readable
+      const { id: conversation_id } = req.params;
+      const user_id = req.user;
 
       const { data, error } = await supabase
         .from("messages")
         .select()
         .eq("conversation_id", conversation_id)
+        .eq("id", user_id)
         .order("created_at", { ascending: true });
 
       res.status(200).json({ data });
@@ -20,7 +39,7 @@ class MessageController {
   static async postListMessage(req, res, next) {
     try {
       const { conversation_id, message, media_url, media_type, sent_by } =
-        req.query;
+        req.body;
 
       const { data, error } = await supabase
         .from("messages")

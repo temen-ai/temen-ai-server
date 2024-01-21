@@ -1,4 +1,4 @@
-import supabase from "../config/supabase.js";
+import { supabase } from "../config/supabase.js";
 
 class CharactersController {
   static async getCharacter(req, res, next) {
@@ -20,7 +20,7 @@ class CharactersController {
   static async postCharacters(req, res, next) {
     try {
       const { name, description, prompt, model, pfp, messages_count } =
-        req.query;
+        req.body;
 
       const { data, error } = await supabase
         .from("characters")

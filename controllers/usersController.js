@@ -1,18 +1,17 @@
-import supabase from "../config/supabase.js";
+import { supabase } from "../config/supabase.js";
 
 class UsersController {
   static async getUser(req, res, next) {
     try {
-      const { id } = req.query;
+      const user_id = req.user;
 
       const { data, error } = await supabase
         .from("users")
         .select()
-        .eq("id", id)
+        .eq("id", user_id)
         .order("created_at", { ascending: true });
 
       res.status(200).json({ data });
-
     } catch (err) {
       next(err);
     }
@@ -20,20 +19,19 @@ class UsersController {
 
   static async postUser(req, res, next) {
     try {
-      const { username, messages_count } = req.query;
+      const { username, messages_count } = req.body;
 
       const { data, error } = await supabase
         .from("users")
         .insert([
-            {
-                username: username,
-                messages_count: messages_count
-            }
+          {
+            username: username,
+            messages_count: messages_count,
+          },
         ])
-        .select()
+        .select();
 
       res.status(200).json({ data });
-
     } catch (err) {
       next(err);
     }
