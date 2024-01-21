@@ -33,11 +33,7 @@ class ConversationsController {
         })
         .select();
 
-      // const tod = await supabase
-      //   .from("conversations")
-      //   .select()
-      //   .eq("user_id", user_id)
-      //   .order("created_at", { ascending: true });
+      console.log(data);
 
       res.status(200).json({ data });
     } catch (err) {

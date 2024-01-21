@@ -12,8 +12,6 @@ async function authenticateToken(req, res, next) {
 
   const { data, error } = await supabase.auth.getUser(token);
 
-  console.log("supabase data", data.user);
-
   if (error) return res.sendStatus(403); // Invalid token
 
   req.user = data.user.id;
