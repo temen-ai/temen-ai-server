@@ -1,12 +1,9 @@
-import express from 'express';
+import express from "express";
+import ConversationsController from "../controllers/conversationsController.js";
+
 const router = express.Router();
 
-router.get('/', (req, res) => {
-    res.send('This is conversations');
-});
-
-router.post('/', (req, res) => {
-    res.send('This is conversations');
-});
+router.get("/", ConversationsController.getConversation);
+router.post("/", ConversationsController.postConversation);
 
 export default router;
