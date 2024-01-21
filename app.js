@@ -1,8 +1,10 @@
 import router from "./routes/index.js"
 import bodyParser from "body-parser";
 import express from "express";
+import dotenv from "dotenv";
+dotenv.config();
 
-const port = 3000;
+const port =process.env.PORT || 3000;
 const app = express();
 
 app.use(express.json());
