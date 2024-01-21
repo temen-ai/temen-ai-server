@@ -1,12 +1,9 @@
 import express from 'express';
+import MessageController from '../controllers/messageController.js';
+
 const router = express.Router();
 
-router.get('/', (req, res) => {
-    res.send('This is messages');
-});
-
-router.post('/', (req, res) => {
-    res.send('This is messages');
-});
+router.get('/', MessageController.getListMessage);
+router.post('/', MessageController.postListMessage);
 
 export default router;

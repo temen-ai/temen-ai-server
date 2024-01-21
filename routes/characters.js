@@ -1,12 +1,9 @@
 import express from 'express';
+import CharactersController from '../controllers/charactersController.js';
+
 const router = express.Router();
 
-router.get('/', (req, res) => {
-    res.send('This is characters');
-});
-
-router.post('/', (req, res) => {
-    res.send('This is characters');
-});
+router.get('/', CharactersController.getCharacter);
+router.post('/', CharactersController.postCharacters);
 
 export default router;
