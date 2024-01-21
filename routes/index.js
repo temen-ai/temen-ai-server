@@ -3,6 +3,7 @@ import charactersRouter from "./characters.js";
 import messagesRouter from "./messages.js";
 import conversationsRouter from "./conversations.js";
 import usersRouter from "./users.js";
+import openaiRouter from "./openai.js";
 import { authenticateToken } from "../config/supabase.js";
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router
   .use("/characters", authenticateToken, charactersRouter)
   .use("/messages", authenticateToken, messagesRouter)
   .use("/conversations", authenticateToken, conversationsRouter)
-  .use("/users", usersRouter);
+  .use("/users", authenticateToken, usersRouter)
+  .use("/openai", authenticateToken, openaiRouter);
 
 export default router;
