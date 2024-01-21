@@ -35,6 +35,24 @@ class MessageController {
       next(err);
     }
   }
+  static async getListMessageByCharacter(req, res, next) {
+    try {
+      // use destructuring to make it readable
+      const { id: character_id } = req.params;
+      const user_id = req.user;
+
+      const { data, error } = await supabase
+        .from("messages")
+        .select()
+        .eq("character_id", character_id)
+        .eq("id", user_id)
+        .order("created_at", { ascending: true });
+
+      res.status(200).json({ data });
+    } catch (err) {
+      next(err);
+    }
+  }
 
   static async postListMessage(req, res, next) {
     try {
