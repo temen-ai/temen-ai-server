@@ -15,7 +15,10 @@ class OpenaiController {
       .eq("character_id", character_id)
       .eq("user_id", user_id)
       .order("created_at", { ascending: true });
+
+
       console.log(message_data,"messageData")
+      
       const chatHistory = message_data?.map(message => {
         if (message.sent_by === message.character_id) {
           return { role: 'assistant', content: message.message };
