@@ -56,7 +56,7 @@ class OpenaiController {
 
 
       // create new message of the AI
-      await supabase
+      const aimessage = await supabase
         .from("messages")
         .insert([
           {
@@ -70,7 +70,7 @@ class OpenaiController {
         ])
         .select();
 
-      res.status(200).json({ data:message });
+      res.status(200).json({ data:aimessage });
     } catch (err) {
       next(err);
     }
