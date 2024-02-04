@@ -18,18 +18,20 @@ class CharactersController {
 
   static async getCharactersList(req, res, next) {
     try {
-      const { id } = req.query;
-
+      const limit = parseInt(req.query.limit) || 10; // default limit
+      const offset = parseInt(req.query.offset) || 0; // default offset
+  
       const { data, error } = await supabase
         .from("characters")
         .select()
-        .order("created_at", { ascending: true });
-
+        .range(offset, offset + limit - 1)
+        .order("messages_count", { ascending: false }); // Order by messages_count in descending order
+  
       res.status(200).json({ data });
     } catch (err) {
       next(err);
     }
-  }
+  }  
 
   static async getUserCharactersList(req, res, next) {
     try {
