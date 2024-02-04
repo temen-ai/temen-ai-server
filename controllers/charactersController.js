@@ -18,7 +18,7 @@ class CharactersController {
 
   static async getCharactersList(req, res, next) {
     try {
-      const searchTerm = req.query.searchTerm;
+      const searchTerm = req.query.searchTerm || null;
       const limit = parseInt(req.query.limit) || 10; // default limit
       const offset = parseInt(req.query.offset) || 0; // default offset
   
@@ -27,15 +27,19 @@ class CharactersController {
       if (searchTerm) {
         // If there is a search term, perform a full-text search
         const formattedSearchTerm = searchTerm.trim().replace(/\s+/g, ' & ');
+        // query = supabase
+        //   .from("characters")
+        //   .select()
+        //   .textSearch('idx_characters_fts', formattedSearchTerm, {
+        //     type: 'websearch'
+        //   })
+        //   .range(0,50);
+
         query = supabase
           .from("characters")
           .select()
-          .textSearch('idx_characters_fts', formattedSearchTerm, {
-            type: 'websearch'
-          })
-          .order("ts_rank_cd(idx_characters_fts, to_tsquery('indonesian', ?))", { ascending: false, foreignTable: 'characters' }, { binding: [formattedSearchTerm] })
+          .ilike('name', `%${searchTerm}%`)
           .order("messages_count", { ascending: false })
-          .range(offset, offset + limit - 1);
       } else {
         // If there is no search term, perform a regular query ordered by messages_count
         query = supabase
@@ -46,6 +50,7 @@ class CharactersController {
       }
   
       const { data, error } = await query;
+      console.log(data,error)
   
       if (error) throw error;
   
