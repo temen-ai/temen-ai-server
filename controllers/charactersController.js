@@ -31,6 +31,22 @@ class CharactersController {
     }
   }
 
+  static async getUserCharactersList(req, res, next) {
+    try {
+      const { id:user_id } = req.params;
+
+      const { data, error } = await supabase
+        .from("characters")
+        .select()
+        .eq("created_by", user_id)
+        .order("updated_at", { ascending: true });
+
+      res.status(200).json({ data });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async getActiveCharactersList(req, res, next) {
     try {
       console.log("hi")
