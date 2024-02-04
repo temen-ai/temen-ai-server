@@ -9,7 +9,7 @@ class UsersController {
         .from("users")
         .select()
         .eq("id", user_id)
-        .order("created_at", { ascending: true });
+        .single();
 
       res.status(200).json({ data });
     } catch (err) {
