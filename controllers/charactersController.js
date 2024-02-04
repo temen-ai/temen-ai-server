@@ -18,20 +18,43 @@ class CharactersController {
 
   static async getCharactersList(req, res, next) {
     try {
+      const searchTerm = req.query.searchTerm;
       const limit = parseInt(req.query.limit) || 10; // default limit
       const offset = parseInt(req.query.offset) || 0; // default offset
   
-      const { data, error } = await supabase
-        .from("characters")
-        .select()
-        .range(offset, offset + limit - 1)
-        .order("messages_count", { ascending: false }); // Order by messages_count in descending order
+      let query;
+  
+      if (searchTerm) {
+        // If there is a search term, perform a full-text search
+        const formattedSearchTerm = searchTerm.trim().replace(/\s+/g, ' & ');
+        query = supabase
+          .from("characters")
+          .select()
+          .textSearch('idx_characters_fts', formattedSearchTerm, {
+            type: 'websearch'
+          })
+          .order("ts_rank_cd(idx_characters_fts, to_tsquery('indonesian', ?))", { ascending: false, foreignTable: 'characters' }, { binding: [formattedSearchTerm] })
+          .order("messages_count", { ascending: false })
+          .range(offset, offset + limit - 1);
+      } else {
+        // If there is no search term, perform a regular query ordered by messages_count
+        query = supabase
+          .from("characters")
+          .select()
+          .order("messages_count", { ascending: false })
+          .range(offset, offset + limit - 1);
+      }
+  
+      const { data, error } = await query;
+  
+      if (error) throw error;
   
       res.status(200).json({ data });
     } catch (err) {
       next(err);
     }
-  }  
+  }
+  
 
   static async getUserCharactersList(req, res, next) {
     try {
