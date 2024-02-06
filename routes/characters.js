@@ -7,6 +7,7 @@ router.get("/", CharactersController.getCharactersList);
 router.get("/active/", CharactersController.getActiveCharactersList);
 router.get("/:id", CharactersController.getCharacter);
 router.get("/user/:id", CharactersController.getUserCharactersList);
-router.post("/", CharactersController.postCharacters);
+router.post("/", CharactersController.createCharacter);
+router.put("/:id", CharactersController.updateCharacter);
 
 export default router;

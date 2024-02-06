@@ -25,15 +25,8 @@ class CharactersController {
       let query;
   
       if (searchTerm) {
-        // If there is a search term, perform a full-text search
+
         const formattedSearchTerm = searchTerm.trim().replace(/\s+/g, ' & ');
-        // query = supabase
-        //   .from("characters")
-        //   .select()
-        //   .textSearch('idx_characters_fts', formattedSearchTerm, {
-        //     type: 'websearch'
-        //   })
-        //   .range(0,50);
 
         query = supabase
           .from("characters")
@@ -96,10 +89,11 @@ class CharactersController {
   }
   
 
-  static async postCharacters(req, res, next) {
+  static async createCharacter(req, res, next) {
     try {
-      const { name, description, prompt, model, pfp, messages_count } =
+      const { name, description, prompt, pfp, welcome_message,is_public } =
         req.body;
+      const user_id = req.user; 
 
       const { data, error } = await supabase
         .from("characters")
@@ -108,15 +102,43 @@ class CharactersController {
             name: name,
             description: description,
             prompt: prompt,
-            model: model,
             pfp: pfp,
-            messages_count: messages_count,
+            welcome_message: welcome_message,
+            created_by: user_id,
+            is_public: is_public
           },
         ])
         .select();
 
       res.status(200).json({ data });
-      d;
+      
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  //edit character
+
+  static async updateCharacter(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { name, description, prompt, pfp, welcome_message,is_public } =
+        req.body;
+
+      const { data, error } = await supabase
+        .from("characters")
+        .update({
+          name: name,
+          description: description,
+          prompt: prompt,
+          pfp: pfp,
+          welcome_message: welcome_message,
+          is_public: is_public
+        })
+        .eq("id", id)
+        .single();
+
+      res.status(200).json({ data });
     } catch (err) {
       next(err);
     }
