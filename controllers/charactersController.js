@@ -29,17 +29,37 @@ class CharactersController {
         const formattedSearchTerm = searchTerm.trim().replace(/\s+/g, ' & ');
 
         query = supabase
-          .from("characters")
-          .select()
-          .ilike('name', `%${searchTerm}%`)
-          .order("messages_count", { ascending: false })
+        .from("characters")
+        .select(`
+          *,
+          users (
+            username,
+            description,
+            pfp,
+            social_link,
+            promo_code
+          )
+        `)
+        .ilike('name', `%${formattedSearchTerm}%`)
+        .order("messages_count", { ascending: false });
+      
       } else {
         // If there is no search term, perform a regular query ordered by messages_count
         query = supabase
-          .from("characters")
-          .select()
-          .order("messages_count", { ascending: false })
-          .range(offset, offset + limit - 1);
+        .from("characters")
+        .select(`
+          *,
+          users (
+            username,
+            description,
+            pfp,
+            social_link,
+            promo_code
+          )
+        `)
+        .order("messages_count", { ascending: false })
+        .range(offset, offset + limit - 1);
+      
       }
   
       const { data, error } = await query;
@@ -59,11 +79,20 @@ class CharactersController {
       const { id:user_id } = req.params;
 
       const { data, error } = await supabase
-        .from("characters")
-        .select()
-        .eq("created_by", user_id)
-        .order("updated_at", { ascending: true });
-
+      .from("characters")
+      .select(`
+        *,
+        users (
+          username,
+          description,
+          pfp,
+          social_link,
+          promo_code
+        )
+      `)
+      .eq("created_by", user_id)
+      .order("messages_count", { ascending: false });
+    
       res.status(200).json({ data });
     } catch (err) {
       next(err);

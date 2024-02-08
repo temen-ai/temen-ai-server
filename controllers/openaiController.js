@@ -7,102 +7,75 @@ class OpenaiController {
       const { character_id, prompt } = req.query;
       const user_id = req.user;
 
-
-      //gets the message history of the conversation
-      const { data:message_data, error:message_error } = await supabase
-      .from("messages")
-      .select()
-      .eq("character_id", character_id)
-      .eq("user_id", user_id)
-      .order("created_at", { ascending: true });
-
-
-      console.log(message_data,"messageData")
-      
-      const chatHistory = message_data?.map(message => {
-        if (message.sent_by === message.character_id) {
-          return { role: 'assistant', content: message.message };
-        } else if (message.sent_by === user_id) {
-          return { role: 'user', content: message.message };
-        }
-      }) || []
-
-
-      //gets the character information
-      const { data:character_data, error:character_error } = await supabase
+      // Get character information including welcome_message
+      const { data: character_data, error: character_error } = await supabase
         .from("characters")
-        .select()
+        .select("prompt, welcome_message")
         .eq("id", character_id)
-        
+        .single(); // Assuming you expect a single row
 
+      if (character_error) {
+        throw character_error;
+      }
 
-      // create new message of the user
-      await supabase
+      // Get the last 10 messages (5 pairs) with the character, ordered by creation time
+      // Adjust the limit to 5 or 10 based on your definition of "pairs"
+      const { data: message_data, error: message_error } = await supabase
+        .from("messages")
+        .select()
+        .eq("character_id", character_id)
+        .eq("user_id", user_id)
+        .order("created_at", { ascending: true })
+        .limit(6); // No need to reverse data
+
+      if (message_error) {
+        throw message_error;
+      }
+
+      let chatHistory = [];
+      // Prepend welcome_message if applicable
+      if (character_data.welcome_message && message_data.length > 0 && message_data[0].sent_by === user_id) {
+        chatHistory.push({ role: 'assistant', content: character_data.welcome_message });
+      }
+
+      chatHistory = chatHistory.concat(message_data.map(message => ({
+        role: message.sent_by === character_id ? 'assistant' : 'user',
+        content: message.message
+      })));
+
+      // Generate AI message
+      const aiMessageContent = await getChatCompletion(prompt, chatHistory, character_data.prompt, character_id);
+
+      // Insert user and AI messages together
+      const { error: insert_error } = await supabase
         .from("messages")
         .insert([
           {
-            character_id: character_id,
+            character_id,
             message: prompt,
-            media_url: "",
-            media_type: "",
             sent_by: user_id,
-            user_id: user_id,
+            user_id,
           },
-        ])
-        .select();
-
-      //gets the openai completion
-      const message = await getChatCompletion(prompt,chatHistory,character_data[0].prompt,character_id)
-
-
-      // create new message of the AI
-      const aimessage = await supabase
-        .from("messages")
-        .insert([
           {
-            character_id: character_id,
-            message: message.ai_message,
-            media_url: "",
-            media_type: "",
+            character_id,
+            message: aiMessageContent.ai_message,
             sent_by: character_id,
-            user_id: user_id,
-          },
-        ])
-        .select();
+            user_id,
+          }
+        ]);
 
-      res.status(200).json({ data:aimessage });
+      if (insert_error) {
+        throw insert_error;
+      }
+
+      res.status(200).json({ data: aiMessageContent });
     } catch (err) {
+      console.error(err);
       next(err);
     }
   }
-
-  /*
-  static async postOpenAI(req, res, next) {
-    try {
-      const { name, description, prompt, model, pfp, messages_count } =
-        req.body;
-
-      const { data, error } = await supabase
-        .from("characters")
-        .insert([
-          {
-            name: name,
-            description: description,
-            prompt: prompt,
-            model: model,
-            pfp: pfp,
-            messages_count: messages_count,
-          },
-        ])
-        .select();
-
-      res.status(200).json({ data });
-      d;
-    } catch (err) {
-      next(err);
-    }
-  }
-  */
 }
+
+
 
 export default OpenaiController;

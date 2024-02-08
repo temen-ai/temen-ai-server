@@ -29,7 +29,7 @@ async function getChatCompletion(
   chatHistory,
   personality,
   character_id,
-  chatbotSettings = "gpt-3.5-turbo",
+  chatbotSettings = "gpt-3.5-turbo-0125",
 ) {
   // Find Context with the prompt using similaritySearch
 //   const context = await vectorStore.similaritySearch(prompt, 4, {
@@ -46,7 +46,7 @@ async function getChatCompletion(
 //     })
 //     .join("\n ");
 
-    const lastSix = chatHistory.slice(-6);
+    const lastSix = chatHistory.slice(-7);
 
     // Process the lastSix array
     const processedChatHistory = lastSix.map((message, index) => {
