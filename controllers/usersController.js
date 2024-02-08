@@ -17,16 +17,19 @@ class UsersController {
     }
   }
 
-  static async postUser(req, res, next) {
+  static async updateUser(req, res, next) {
     try {
-      const { username, messages_count } = req.body;
+      const { username, description,pfp,social_link,promo_code } = req.body;
 
       const { data, error } = await supabase
         .from("users")
         .insert([
           {
             username: username,
-            messages_count: messages_count,
+            description: description,
+            pfp: pfp,
+            social_link: social_link,
+            promo_code: promo_code
           },
         ])
         .select();

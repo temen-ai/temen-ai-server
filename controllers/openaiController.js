@@ -7,36 +7,50 @@ class OpenaiController {
       const { character_id, prompt } = req.query;
       const user_id = req.user;
 
-      // Get character information including welcome_message
+      // Fetch user subscription status, message counts, and package details
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("is_premium, daily_message_count, monthly_message_count, package:packages(*)")
+        .eq("id", user_id)
+        .single();
+
+      if (userError || !userData) {
+        throw userError || new Error("User not found");
+      }
+
+      // Check message limits based on premium status
+      if (userData.is_premium && userData.monthly_message_count >= userData.package.chat_limit) {
+        return res.status(403).json({ error: "Monthly message limit reached." });
+      } else if (!userData.is_premium && userData.daily_message_count >= 30) {
+        return res.status(403).json({ error: "Daily message limit reached." });
+      }
+
+      // Get character information
       const { data: character_data, error: character_error } = await supabase
         .from("characters")
         .select("prompt, welcome_message")
         .eq("id", character_id)
-        .single(); // Assuming you expect a single row
+        .single();
 
       if (character_error) {
         throw character_error;
       }
 
-      // Get the last 10 messages (5 pairs) with the character, ordered by creation time
-      // Adjust the limit to 5 or 10 based on your definition of "pairs"
+      // Fetch the last 6 messages for chat history
       const { data: message_data, error: message_error } = await supabase
         .from("messages")
         .select()
         .eq("character_id", character_id)
         .eq("user_id", user_id)
         .order("created_at", { ascending: true })
-        .limit(6); // No need to reverse data
+        .limit(6);
 
       if (message_error) {
         throw message_error;
       }
 
-      let chatHistory = [];
-      // Prepend welcome_message if applicable
-      if (character_data.welcome_message && message_data.length > 0 && message_data[0].sent_by === user_id) {
-        chatHistory.push({ role: 'assistant', content: character_data.welcome_message });
-      }
+      let chatHistory = character_data.welcome_message && message_data.length > 0 && message_data[0].sent_by === user_id ?
+        [{ role: 'assistant', content: character_data.welcome_message }] : [];
 
       chatHistory = chatHistory.concat(message_data.map(message => ({
         role: message.sent_by === character_id ? 'assistant' : 'user',
@@ -46,28 +60,30 @@ class OpenaiController {
       // Generate AI message
       const aiMessageContent = await getChatCompletion(prompt, chatHistory, character_data.prompt, character_id);
 
-      // Insert user and AI messages together
-      const { error: insert_error } = await supabase
+      // Insert user and AI messages
+      await supabase
         .from("messages")
         .insert([
-          {
-            character_id,
-            message: prompt,
-            sent_by: user_id,
-            user_id,
-          },
-          {
-            character_id,
-            message: aiMessageContent.ai_message,
-            sent_by: character_id,
-            user_id,
-          }
+          { character_id, message: prompt, sent_by: user_id, user_id },
+          { character_id, message: aiMessageContent.ai_message, sent_by: character_id, user_id }
         ]);
 
-      if (insert_error) {
-        throw insert_error;
-      }
+      // Update message counts atomically where possible
+      await Promise.all([
+        supabase
+          .from("users")
+          .update({
+            daily_message_count: (userData.daily_message_count || 0) + 1,
+            monthly_message_count: (userData.monthly_message_count || 0) + 1
+          })
+          .eq("id", user_id),
+        supabase
+          .from("characters")
+          .update({ messages_count: supabase.rpc('increment', { value: 1 }) }) // Assuming you have a custom RPC or correct increment function
+          .eq("id", character_id)
+      ]);
 
+      // Send response back with AI message content
       res.status(200).json({ data: aiMessageContent });
     } catch (err) {
       console.error(err);
@@ -75,7 +91,5 @@ class OpenaiController {
     }
   }
 }
-
-
 
 export default OpenaiController;

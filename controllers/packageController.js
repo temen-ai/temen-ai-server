@@ -48,8 +48,8 @@ class PackageController {
         const { data: transactionData, error: transactionError } = await supabase
             .from("transactions")
             .insert([{ user_id: user_id, package_id: package_id }])
-            .single()
-            .select();
+            .single();
+
 
         if (transactionError) {
             throw transactionError;
@@ -81,79 +81,88 @@ class PackageController {
 
   static async postPackagePurchaseWebhook(req, res, next) {
     try {
-      const transactionData = req.body;
-      const orderId = transactionData.order_id;
-      const transactionStatus = transactionData.transaction_status;
+        const transactionData = req.body;
+        const orderId = transactionData.order_id;
+        const transactionStatus = transactionData.transaction_status;
 
-      // Fetch the transaction to get user ID and package ID
-      const { data: transaction, error: transactionError } = await supabase
-          .from("transactions")
-          .select("user_id, package_id")
-          .eq("id", orderId)
-          .single();
+        // Fetch the transaction to get user ID and package ID
+        const { data: transaction, error: transactionError } = await supabase
+            .from("transactions")
+            .select("user_id, package_id")
+            .eq("id", orderId)
+            .single();
 
-      console.log(orderId,transaction, "transaction",transactionData)
+        if (transactionError || !transaction) {
+            throw transactionError || new Error("Transaction not found");
+        }
 
-      if (transactionError || !transaction) {
-          throw transactionError || new Error("Transaction not found");
-      }
+        // Process transaction based on its status
+        if (transactionStatus === 'settlement' || transactionStatus === 'capture') {
+            // Update the transaction as paid
+            const { error: paymentUpdateError } = await supabase
+                .from("transactions")
+                .update({ paid: true })
+                .eq("id", orderId);
 
-      // Process transaction based on its status
-      if (transactionStatus === 'settlement' || transactionStatus === 'capture') {
-        console.log( "woi")
-        // Fetch package duration from the 'packages' table
-          const { data: packageData, error: packageError } = await supabase
-              .from("packages")
-              .select("duration")
-              .eq("id", transaction.package_id)
-              .single();
-          console.log( "woi",packageData)
-          if (packageError) {
-              throw packageError;
-          }
+            if (paymentUpdateError) {
+                throw paymentUpdateError;
+            }
 
-          // Fetch current package duration for the user
-          const { data: userData, error: userError } = await supabase
-              .from("users")
-              .select("package_duration")
-              .eq("id", transaction.user_id)
-              .single();
+            // Fetch package duration from the 'packages' table
+            const { data: packageData, error: packageError } = await supabase
+                .from("packages")
+                .select("duration")
+                .eq("id", transaction.package_id)
+                .single();
 
-          console.log(userData, "userData")
-          if (userError) {
-              throw userError;
-          }
+            if (packageError) {
+                throw packageError;
+            }
 
-          let newPackageDuration;
-          if (userData.package_duration) {
-              // Use existing package duration as the start date
-              newPackageDuration = new Date(new Date(userData.package_duration).getTime() + packageData.duration * 24 * 60 * 60 * 1000);
-          } else {
-              // Use current date as the start date
-              newPackageDuration = new Date(new Date().getTime() + packageData.duration * 24 * 60 * 60 * 1000);
-          }
+            // Fetch current package duration for the user
+            const { data: userData, error: userError } = await supabase
+                .from("users")
+                .select("package_duration")
+                .eq("id", transaction.user_id)
+                .single();
 
-          // Update user's package status and duration in your database
-          const { error: userUpdateError } = await supabase
-              .from("users")
-              .update({
-                  package_id: transaction.package_id,
-                  package_duration: newPackageDuration.toISOString()
-              })
-              .eq("id", transaction.user_id);
-          console.log(newPackageDuration, "newPackageDuration")
-          if (userUpdateError) {
-              throw userUpdateError;
-          }
-      }
+            if (userError) {
+                throw userError;
+            }
 
-      // Handle other transaction statuses (e.g., 'deny', 'cancel', etc.)
+            let newPackageDuration;
+            if (userData.package_duration) {
+                // Use existing package duration as the start date
+                newPackageDuration = new Date(new Date(userData.package_duration).getTime() + packageData.duration * 24 * 60 * 60 * 1000);
+            } else {
+                // Use current date as the start date
+                newPackageDuration = new Date(new Date().getTime() + packageData.duration * 24 * 60 * 60 * 1000);
+            }
 
-      res.status(200).json({ message: 'Webhook processed' });
+            // Update user's package status and duration in your database
+            const { error: userUpdateError } = await supabase
+                .from("users")
+                .update({
+                    package_id: transaction.package_id,
+                    package_duration: newPackageDuration.toISOString(),
+                    is_premium: true
+                })
+                .eq("id", transaction.user_id);
+
+            if (userUpdateError) {
+                throw userUpdateError;
+            }
+        }
+
+        // Optionally, handle other transaction statuses (e.g., 'deny', 'cancel', etc.)
+
+        res.status(200).json({ message: 'Webhook processed' });
     } catch (err) {
+        console.error(err);
         next(err);
     }
-  }
+}
+
 }
 
 export default PackageController;
