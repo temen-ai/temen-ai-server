@@ -61,12 +61,14 @@ class OpenaiController {
       const aiMessageContent = await getChatCompletion(prompt, chatHistory, character_data.prompt, character_id);
 
       // Insert user and AI messages
-      await supabase
-        .from("messages")
-        .insert([
-          { character_id, message: prompt, sent_by: user_id, user_id },
-          { character_id, message: aiMessageContent.ai_message, sent_by: character_id, user_id }
-        ]);
+      const { newMessagesData, error } = await supabase
+      .from("messages")
+      .insert([
+        { character_id, message: prompt, sent_by: user_id, user_id },
+        { character_id, message: aiMessageContent.ai_message, sent_by: character_id, user_id }
+      ])
+      .select("*"); // Adjust the select clause as needed
+      const userMessage = newMessagesData.find(msg => msg.sent_by === user_id);
 
       // Update message counts atomically where possible
       await Promise.all([
@@ -84,7 +86,7 @@ class OpenaiController {
       ]);
 
       // Send response back with AI message content
-      res.status(200).json({ data: aiMessageContent });
+      res.status(200).json({ data: userMessage });
     } catch (err) {
       console.error(err);
       next(err);
