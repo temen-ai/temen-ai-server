@@ -10,7 +10,7 @@ class OpenaiController {
       // Fetch user subscription status, message counts, and package details
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("is_premium, daily_message_count, monthly_message_count, package:packages(*)")
+        .select("is_premium, messages_count, daily_message_count, monthly_message_count, package:packages(*)")
         .eq("id", user_id)
         .single();
 
@@ -76,13 +76,11 @@ class OpenaiController {
           .from("users")
           .update({
             daily_message_count: (userData.daily_message_count || 0) + 1,
-            monthly_message_count: (userData.monthly_message_count || 0) + 1
+            monthly_message_count: (userData.monthly_message_count || 0) + 1,
+            messages_count: (userData.messages_count || 0) + 1
           })
           .eq("id", user_id),
-        supabase
-          .from("characters")
-          .update({ messages_count: supabase.rpc('increment', { value: 1 }) }) // Assuming you have a custom RPC or correct increment function
-          .eq("id", character_id)
+          supabase.rpc('increment_character_count', { character_id_param: character_id })
       ]);
 
       // Send response back with AI message content
