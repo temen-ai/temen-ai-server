@@ -13,8 +13,8 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 function replacePlaceholders(content, username, characterName) {
   return content
-      .replace(/\{\{user\}\}/g, username)
-      .replace(/\{\{char\}\}/g, characterName);
+    .replace(/\{\{user\}\}/gi, username)
+    .replace(/\{\{char\}\}/gi, characterName);
 }
 
 // Function to get chat completion from OpenAI
