@@ -35,19 +35,19 @@ class UsersController {
 
   static async updateUser(req, res, next) {
     try {
+      const user_id = req.user;
       const { username, description,pfp,social_link,promo_code } = req.body;
 
       const { data, error } = await supabase
         .from("users")
-        .insert([
-          {
-            username: username,
-            description: description,
-            pfp: pfp,
-            social_link: social_link,
-            promo_code: promo_code
-          },
-        ])
+        .update({
+          username: username,
+          description: description,
+          pfp: pfp,
+          social_link: social_link,
+          promo_code: promo_code
+        })
+        .eq("id", user_id)
         .select();
 
       res.status(200).json({ data });
