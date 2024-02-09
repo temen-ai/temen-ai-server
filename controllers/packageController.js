@@ -48,7 +48,8 @@ class PackageController {
         const { data: transactionData, error: transactionError } = await supabase
             .from("transactions")
             .insert([{ user_id: user_id, package_id: package_id }])
-            .single();
+            .single()
+            .select()
 
 
         if (transactionError) {
