@@ -10,7 +10,7 @@ class OpenaiController {
       // Fetch user subscription status, message counts, and package details
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("is_premium, messages_count, daily_message_count, monthly_message_count, package:packages(*)")
+        .select("is_premium, messages_count, daily_messages_count, monthly_messages_count, package:packages(*)")
         .eq("id", user_id)
         .single();
 
@@ -19,9 +19,9 @@ class OpenaiController {
       }
 
       // Check message limits based on premium status
-      if (userData.is_premium && userData.monthly_message_count >= userData.package.chat_limit) {
+      if (userData.is_premium && userData.monthly_messages_count >= userData.package.chat_limit) {
         return res.status(403).json({ error: "Monthly message limit reached." });
-      } else if (!userData.is_premium && userData.daily_message_count >= 30) {
+      } else if (!userData.is_premium && userData.daily_messages_count >= 30) {
         return res.status(403).json({ error: "Daily message limit reached." });
       }
 
@@ -75,8 +75,8 @@ class OpenaiController {
         supabase
           .from("users")
           .update({
-            daily_message_count: (userData.daily_message_count || 0) + 1,
-            monthly_message_count: (userData.monthly_message_count || 0) + 1,
+            daily_messages_count: (userData.daily_messages_count || 0) + 1,
+            monthly_messages_count: (userData.monthly_messages_count || 0) + 1,
             messages_count: (userData.messages_count || 0) + 1
           })
           .eq("id", user_id),

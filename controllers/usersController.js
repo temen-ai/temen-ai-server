@@ -48,7 +48,7 @@ class UsersController {
           promo_code: promo_code
         })
         .eq("id", user_id)
-        .select();
+        .select("id, username, description, pfp, social_link, promo_code");
 
       res.status(200).json({ data });
     } catch (err) {
