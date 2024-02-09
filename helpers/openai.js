@@ -17,51 +17,59 @@ function replacePlaceholders(content, username, characterName) {
     .replace(/\{\{char\}\}/gi, characterName);
 }
 
-// Function to get chat completion from OpenAI
+// Updated function signature to include welcome_message
 async function getChatCompletion(
   prompt,
   chatHistory,
+  welcome_message, // Make sure this parameter is passed when calling the function
   personality,
-  character_id,
-  chatbotSettings = "gpt-3.5-turbo-0125",
   username,
   characterName
 ) {
-  const lastSix = chatHistory.slice(-7);
+  const chatbotSettings = "gpt-3.5-turbo-0125";
+  const lastSix = chatHistory
   const processedChatHistory = lastSix.map((message, index) => {
-      if (index < 4) {
-          return {
-              role: message.role,
-              content: message.content.length > 50 ? message.content.substring(0, 50) + '...' : message.content
-          };
-      } else {
-          return message;
-      }
+    if (index < 4) {
+      return {
+        role: message.role,
+        content: message.content.length > 50 ? message.content.substring(0, 50) + '...' : message.content
+      };
+    } else {
+      return message;
+    }
   });
 
   let localChatHistory = processedChatHistory.map(message => ({
-      role: message.role,
-      content: replacePlaceholders(message.content, username, characterName)
+    role: message.role,
+    content: replacePlaceholders(message.content, username, characterName)
   }));
 
+  // Unshift the welcome message at the start of the chat history
+  if (welcome_message) {
+    localChatHistory.unshift({
+      role: 'assistant', // or 'system' based on your role naming convention
+      content: replacePlaceholders(welcome_message, username, characterName)
+    });
+  }
+
   localChatHistory.unshift({
-      role: "system",
-      content: replacePlaceholders(personality, username, characterName)
+    role: "system",
+    content: replacePlaceholders(personality, username, characterName)
   });
 
   localChatHistory.push({ role: "user", content: prompt });
 
   let firstResponse = await openai.chat.completions.create({
-      model: chatbotSettings,
-      messages: localChatHistory,
+    model: chatbotSettings,
+    messages: localChatHistory,
   });
 
   let responseMessage = firstResponse.choices[0].message;
 
   return {
-      tokens: firstResponse.usage.total_tokens,
-      ai_message: responseMessage.content,
-      human_message: prompt,
+    tokens: firstResponse.usage.total_tokens,
+    ai_message: responseMessage.content,
+    human_message: prompt,
   };
 }
 

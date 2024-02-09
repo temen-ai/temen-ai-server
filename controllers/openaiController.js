@@ -43,14 +43,12 @@ class OpenaiController {
         .eq("character_id", character_id)
         .eq("user_id", user_id)
         .order("created_at", { ascending: true })
-        .limit(6);
+        .limit(10);
 
       if (message_error) {
         throw message_error;
       }
 
-      let chatHistory = character_data.welcome_message && message_data.length > 0 && message_data[0].sent_by === user_id ?
-        [{ role: 'assistant', content: character_data.welcome_message }] : [];
 
       chatHistory = chatHistory.concat(message_data.map(message => ({
         role: message.sent_by === character_id ? 'assistant' : 'user',
@@ -58,7 +56,7 @@ class OpenaiController {
       })));
 
       // Generate AI message
-      const aiMessageContent = await getChatCompletion(prompt, chatHistory, character_data.prompt, character_id);
+      const aiMessageContent = await getChatCompletion(prompt, chatHistory, welcome_message,character_data.prompt, userData.username, character_data.name);
 
       // Insert user and AI messages
       await supabase
