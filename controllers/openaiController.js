@@ -50,7 +50,7 @@ class OpenaiController {
       }
 
 
-      chatHistory = chatHistory.concat(message_data.map(message => ({
+      const chatHistory = message_data.concat(message_data.map(message => ({
         role: message.sent_by === character_id ? 'assistant' : 'user',
         content: message.message
       })));
