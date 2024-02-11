@@ -56,7 +56,7 @@ class OpenaiController {
       })));
 
       // Generate AI message
-      const aiMessageContent = await getChatCompletion(prompt, chatHistory, welcome_message,character_data.prompt, userData.username, character_data.name);
+      const aiMessageContent = await getChatCompletion(prompt, chatHistory, character_data.welcome_message,character_data.prompt, userData.username, character_data.name);
 
       // Insert user and AI messages
       await supabase
