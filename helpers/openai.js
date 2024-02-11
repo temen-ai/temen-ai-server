@@ -27,8 +27,9 @@ async function getChatCompletion(
   characterName
 ) {
   const chatbotSettings = "gpt-3.5-turbo-0125";
-  const lastSix = chatHistory
-  const processedChatHistory = lastSix.map((message, index) => {
+
+
+  const processedChatHistory = chatHistory.map((message, index) => {
     if (index < 4) {
       return {
         role: message.role,

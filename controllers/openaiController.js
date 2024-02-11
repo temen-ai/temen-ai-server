@@ -50,10 +50,10 @@ class OpenaiController {
       }
 
 
-      const chatHistory = message_data.concat(message_data.map(message => ({
+      const chatHistory = message_data.map(message => ({
         role: message.sent_by === character_id ? 'assistant' : 'user',
         content: message.message
-      })));
+      }));
 
       // Generate AI message
       const aiMessageContent = await getChatCompletion(prompt, chatHistory, character_data.welcome_message,character_data.prompt, userData.username, character_data.name);
